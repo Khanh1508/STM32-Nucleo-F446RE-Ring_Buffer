@@ -17,7 +17,7 @@ typedef struct
 } Buffer_t;
 
 void rb_init(Buffer_t *rb);
-
+bool rb_push(Buffer_t *rb, uint8_t byte);
 #endif  /* RINGBUFFER_H */
 
 
