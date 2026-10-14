@@ -18,6 +18,7 @@ typedef struct
 
 void rb_init(Buffer_t *rb);
 bool rb_push(Buffer_t *rb, uint8_t byte);
+bool rb_pop(Buffer_t *rb, uint8_t *store);
 #endif  /* RINGBUFFER_H */
 
 
