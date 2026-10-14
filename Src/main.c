@@ -1,8 +1,8 @@
 /**
  * @file  main.c
- * @brief Test for the ring buffer: push a string in, pop it back out, and
- *        check that every byte comes out unchanged and in the same order (FIFO).
- *        Result: fail_count == 0 means the test passed.
+ * @brief Ring buffer wrap-around test: push 8, pop 3, push 3, pop 8.
+ *        head and tail both wrap; popped bytes must match msg in order.
+ *        fail_count == 0 means pass.
  */
 
 #include "ringbuf.h"
@@ -10,26 +10,26 @@
 /* Buffer instance allocated statically in SRAM (.bss segment) */
 Buffer_t rb;
 
-/* Test data: 5 letters + '\0' = 6 bytes. Must fit in the buffer (BUFFER_SIZE). */
-const char msg[] = "hello";
+/* 11 letters, more than BUFFER_SIZE: fits because pops free slots */
+const char msg[] = "ABCDEFGHIJK";
 
-/* Destination of rb_pop(). 0xAA = "not written yet", so an untouched value is visible. */
-uint8_t received_byte = 0xAA;
+/* Destination of rb_pop()*/
+uint8_t received_byte;
 
 /* Number of failed checks. 0 = pass. */
 uint8_t fail_count = 0;
 
-/* Bytes read back, kept so they can be inspected in the debugger. Size >= sizeof(msg). */
-uint8_t popped_bytes[8u];
+/* Bytes read back, one per msg index (0..10) */
+uint8_t popped_bytes[11u];
 
 int main(void)
 {
 
-	/* Initialize ring buffer , head, tail and counter to zero */
+	/* Reset head, tail, count */
 	rb_init(&rb);
 
-	/*Push data into buffer*/
-	for (uint8_t i = 0; i < sizeof(msg); i++)
+	/* Phase 1: push msg[0..7] -> buffer full. Expect head=0, tail=0, count=8 */
+	for (uint8_t i = 0; i <= 7; i++)
 	{
 		if (!rb_push(&rb, msg[i]))
 		{
@@ -37,8 +37,8 @@ int main(void)
 		}
 	}
 
-	/*Read data from buffer*/
-	for (uint8_t j = 0; j < sizeof(msg); j++)
+	/* Phase 2: pop msg[0..2] (A,B,C) -> 3 slots free. Expect head=0, tail=3, count=5 */
+	for (uint8_t j = 0; j <= 2; j++)
 	{
 		if (!rb_pop(&rb, &received_byte))
 		{
@@ -51,6 +51,33 @@ int main(void)
 
 		popped_bytes[j] = received_byte;
 	}
+
+	/* Phase 3: push msg[8..10] (I,J,K) into buf[0..2] -> head wraps.
+	 * Expect head=3, tail=3, count=8 (full again) */
+	for (uint8_t i = 8; i <= 10; i++)
+	{
+		if (!rb_push(&rb, msg[i]))
+		{
+			fail_count++;
+		}
+	}
+
+	/* Phase 4: pop msg[3..10] (D..K) -> tail wraps, buffer empty.
+	 * Expect head=3, tail=3, count=0 */
+	for (uint8_t j = 3; j <= 10; j++)
+	{
+		if (!rb_pop(&rb, &received_byte))
+		{
+			fail_count++;
+		}
+		if (received_byte != msg[j])
+		{
+			fail_count++;
+		}
+
+		popped_bytes[j] = received_byte;
+	}
+
 	for (;;)
 	{
 		// Do nothing
