@@ -1,3 +1,5 @@
 Debug/
 .setting/
 .settings/
+build/
+docs/*.pdf
