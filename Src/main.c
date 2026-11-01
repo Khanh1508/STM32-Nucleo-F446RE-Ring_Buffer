@@ -5,16 +5,20 @@
 
 #include "ringbuf.h"
 #include "uart_trans_receive.h"
-char msg_usart[] = "Hello, World!\r\n"; /* Message to be sent over USART2 */
-Buffer_t rbc; /* ring buffer for received bytes */
+#include <stdint.h>
+//char msg_usart[] = "Hello, World!\r\n"; /* Message to be sent over USART2 */
+
+uint8_t c;
+
 int main(void)
-{
-	rb_init(&rbc);
-	//test_ring_buffer(); /* Calling 4-phase wrap-around test ring buffer function */
+{	
 	init_uart();
-	uart_send_string(msg_usart);
 	for (;;)
 	{
-		// Do nothing
+		if (uart_read(&c)) /* Check if a character is available in the ring buffer */
+		{
+			uart_send_char(c); /* Echo the received character back */
+		}
+	
 	}
 }

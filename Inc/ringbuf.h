@@ -6,7 +6,7 @@
 #include <stdint.h>  /* uint8_t */
 #include <stdbool.h> /* bool, true, false (used by push/pop return values) */
 
-#define BUFFER_SIZE 8u /* number of slots in the buffer (1 byte per slot) */
+#define BUFFER_SIZE 32u /* number of slots in the buffer (1 byte per slot) */
 
 typedef struct
 {
